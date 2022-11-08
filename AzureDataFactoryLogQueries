@@ -1,4 +1,4 @@
-==== Integration Runtime High CPU Utilization ===
+==== Pipeline Failed ===
 
 ADFActivityRun 
 | where Status == "Failed" 
