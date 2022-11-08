@@ -1,0 +1,17 @@
+== Potential Threat Detected ===
+
+ProtectionStatus
+| where TypeofProtection == "Windows Defender" or TypeofProtection == "System Center Endpoint Protection"
+| where ThreatStatusRank > 150
+| summarize arg_max(TimeGenerated, *) by Computer, TypeofProtection, ResourceId, ThreatStatus, ThreatStatusDetails
+| project TimeGenerated, Asset=Computer, AdditionalData=TypeofProtection, ResourceId, outerMessage = ThreatStatus, innermostMessage = ThreatStatusDetails
+
+
+===  Protection vulnerability detected ===
+
+ProtectionStatus
+| where TypeofProtection == "Windows Defender" or TypeofProtection == "System Center Endpoint Protection"
+| where ProtectionStatusRank > 150 and ProtectionStatusRank < 550
+| summarize arg_max(TimeGenerated, *) by Computer, TypeofProtection, ResourceId, ProtectionStatus, ProtectionStatusDetails
+| project TimeGenerated, Asset=Computer, AdditionalData=TypeofProtection, ResourceId, outerMessage = ProtectionStatus, innermostMessage = ProtectionStatusDetails
+
