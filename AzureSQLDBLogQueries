@@ -1,0 +1,23 @@
+===Azure SQL DB Delete Activity===
+
+AzureActivity 
+| where OperationName == "Delete SQL database"  or OperationName == "Delete SQL server" 
+| where ActivityStatus == "Accepted" and ResourceProvider == "Microsoft SQL" 
+| project EventSubmissionTimestamp , Asset=ResourceId, OperationId, Caller, ResourceGroup, OperationName
+
+==== Azure SQL DB Storage Capacity Warning ====
+
+AzureMetrics 
+| where ResourceProvider=="MICROSOFT.SQL" 
+| where ResourceId contains "/DATABASES/" 
+| where MetricName=="storage_percent" 
+| where TimeGenerated > ago(60m) 
+| where Maximum > 75
+
+
+==== Azure SQL DB Storage Above Threshold ====
+
+AzureMetrics 
+| where ResourceProvider=="MICROSOFT.SQL" 
+| where MetricName=="storage_percent" 
+| summarize AggregatedValue = max(Maximum) by bin(TimeGenerated, 5m), TimeGenerated, MetricName, Asset=Resource, ResourceId, SubscriptionId
