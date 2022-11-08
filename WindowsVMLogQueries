@@ -1,0 +1,53 @@
+===VM Application Fault===
+
+Event 
+| where EventLog == "Application" 
+| where EventID == "1000" 
+| project TimeGenerated, ResourceId = _ResourceId, MetricName = Source, MetricValue = EventID, RenderedDescription, Asset=Computer, Type, EventData, EventLog, EventLevelName, UserName
+
+=== Windows Event : Unexpected Restart====
+
+Event 
+| where EventLog == "System" 
+| where EventID == "6008" 
+| project TimeGenerated, ResourceId = _ResourceId, MetricName=Source, MetricValue=EventID, RenderedDescription, Asset=Computer, Type, EventData, EventLog, EventLevelName, UserName
+
+
+======VWINDOWS VM STOPPED, DELETED======
+
+AzureActivity 
+| where  ResourceProviderValue == "MICROSOFT.COMPUTE" and ActivityStatusValue == "Start" 
+| where OperationNameValue == "MICROSOFT.COMPUTE/VIRTUALMACHINES/DEALLOCATE/ACTION" or OperationNameValue == "MICROSOFT.COMPUTE/VIRTUALMACHINES/REDEPLOY/ACTION" or OperationNameValue == "MICROSOFT.COMPUTE/VIRTUALMACHINES/DELETE"  
+| project EventSubmissionTimestamp, ResourceId=_ResourceId, OperationId=CorrelationId, Caller, ResourceGroup, OperationName=OperationNameValue
+
+
+===NTFS DISK ERROR===
+
+Event 
+| where Source == "Microsoft-Windows-Ntfs" 
+| where EventLevelName == "error" 
+| project TimeGenerated, ResourceId = _ResourceId, MetricName = Source, MetricValue = EventID, RenderedDescription, Asset=Computer, Type, EventData, EventLog, EventLevelName, UserName
+
+
+=== HEARTBEAT FAILURE/STOPPED===
+
+Heartbeat 
+| where TimeGenerated > ago(2h) 
+| summarize LastHeartbeat = max(TimeGenerated) by Computer, ComputerEnvironment, ResourceId 
+| where isnotempty(Computer) 
+| where LastHeartbeat < ago(15m) 
+| project Asset = Computer, AdditionalData = LastHeartbeat, ComputerEnvironment, ResourceId
+
+
+MISSING ENDPOINT PROTECTION / MALWARE DETECTED
+
+ProtectionStatus
+| where TypeofProtection == "Malicious Software Removal Tool" or TypeofProtection == "No Anti-Malware Tool was detected"
+| summarize arg_max(TimeGenerated, *) by Computer, TypeofProtection, ResourceId
+| project TimeGenerated, Asset=Computer, AdditionalData=TypeofProtection, ResourceId
+
+==== MULTIPLE LOGON FAILURE ====
+
+SecurityEvent | where EventID == 4625 | project Asset=Computer, AdditionalData=EventData, TenantId, Activity, MetricValue=EventID, MetricName="Event", TargetAccount | summarize AggregatedValue = count() by TargetAccount, Asset, AdditionalData, TenantId, Activity, MetricValue, MetricName
+
+
