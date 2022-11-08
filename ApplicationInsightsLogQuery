@@ -1,0 +1,21 @@
+====Web Test Availability====
+
+availabilityResults 
+| where  message !="Passed" 
+| project name, success, timestamp, location, message, duration, itemType, appId, appName, itemCount, Asset= strcat(name, "-", appName) 
+| summarize AggregatedValue=count(success) by name, Asset, bin(timestamp, 5m), success, location, message, duration, MetricName=itemType, appId, MetricValue=itemCount, Resource=appName
+
+
+=====Web Test HTTP 4xx Errors====
+
+requests 
+| where resultCode startswith "4" 
+| project url, success, timestamp, itemType, appId, appName, itemCount, Asset= strcat(name, "-", appName), resultCode 
+| summarize AggregatedValue=count(resultCode) by Asset, bin(timestamp, 5m), success, url, MetricName=itemType, appId, MetricValue=itemCount, Resource=appName, resultCode
+
+==== Web Test HTTP 5xx Errors====
+
+requests 
+| where  resultCode startswith "5" 
+| project url, success, timestamp, itemType, appId, appName, itemCount, Asset= strcat(name, "-", appName), resultCode 
+| summarize AggregatedValue=count(resultCode) by  Asset, bin(timestamp, 5m), success, url, MetricName=itemType, appId, MetricValue=itemCount, Resource=appName, resultCode
