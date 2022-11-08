@@ -1,0 +1,22 @@
+==== Integration Runtime High CPU Utilization ===
+
+ADFActivityRun 
+| where Status == "Failed" 
+| where ErrorMessage !contains "Activity failed because an inner activity failed" 
+| project TimeGenerated, ResourceId, OuterMessage=PipelineName, Activity=OperationName, InnerMostMessage=ErrorMessage, AdditionalData=PipelineRunId
+
+
+==== Instance Deleted ====
+
+AzureActivity 
+| where OperationName == "Delete Data Factory" 
+|  where ActivityStatus == "Succeeded" and ResourceProvider == "Microsoft.DATAFACTORY" 
+| project EventSubmissionTimestamp, Asset=Resource, ResourceId, OperationId, Caller, ResourceGroup, OperationName
+
+
+===  High CPU Percentage ===
+
+AzureMetrics 
+| where ResourceProvider  == "MICROSOFT.DATAFACTORY" 
+| where MetricName == "IntegrationRuntimeCpuPercentage" 
+| summarize  AggregatedValue = avg(Average) by bin(TimeGenerated,5m), SubscriptionId, ResourceId, Asset=Resource, MetricName
